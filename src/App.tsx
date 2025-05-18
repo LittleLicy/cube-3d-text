@@ -25,7 +25,9 @@ import {
     GlobalOutlined,
     PlusOutlined,
     ReloadOutlined,
-    SettingOutlined
+    SettingOutlined,
+    GithubOutlined,
+    FileTextOutlined
 } from "@ant-design/icons";
 import { HappyProvider } from '@ant-design/happy-work-theme';
 import ThreeCanvas, { ThreeCanvasHandle } from "./components/ThreeCanvas";
@@ -33,35 +35,27 @@ import "antd/dist/reset.css";
 import { CameraOptions, Text3DData, WorkspaceData } from "./types/text";
 import TextSettingsPanel from "./components/TextSettingsPanel.tsx";
 import { materialGradientLightBlue, materialGradientMediumYellow } from "./presetMaterials.ts";
-import { MessageProvider } from "./contexts/MessageContext";
+import { MessageProvider, useMessage } from "./contexts/MessageContext";
 import { useLanguage } from "./language.tsx";
 import SceneAndCameraSettingsPanel from "./components/SceneAndCameraSettingsPanel.tsx";
-import { builtinFontsMap, builtinFontsTextureYOffset } from "./utils/fonts.ts";
+import { builtinFontsTextureYOffset } from "./utils/fonts.ts";
+import {
+    exportWorkspace,
+    importWorkspaceFromFile,
+    saveWorkspaceToLocalStorage,
+    loadWorkspaceFromLocalStorage
+} from "./utils/workspaceIO";
+import { FontProvider, useFonts } from "./contexts/FontContext";
+import { MaterialProvider } from './contexts/MaterialContext';
 
 const { Panel } = Collapse;
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
     const { language, setLanguage, gLang } = useLanguage();
+    const messageApi = useMessage();
+    const { fontsMap } = useFonts();
 
-    const [selectedFont, setSelectedFont] = useState(language === "en_US" ? "Minecraft Ten" : "Fusion Pixel 10px");
-    const [customFonts, setCustomFonts] = useState<{ [fontName: string]: string }>(() => {
-        const stored = localStorage.getItem("customFonts");
-        return stored ? JSON.parse(stored) : {};
-    });
-    //   注意：为了刷新能实时看到，你可以把它拆分成 hooks 或在 render 里实时合并
-    const [fontsMap, setFontsMap] = useState<{ [name: string]: string }>({
-        ...builtinFontsMap,
-        ...customFonts,
-    });
-    useEffect(() => {
-        // 当 customFonts 有变动时，合并到 fontsMap 并存储到 localStorage
-        setFontsMap({
-            ...builtinFontsMap,
-            ...customFonts,
-        });
-        localStorage.setItem("customFonts", JSON.stringify(customFonts));
-    }, [customFonts]);
-
+    const [globalFontId, setGlobalFontId] = useState(language === "en_US" ? "Minecraft Ten" : "Fusion Pixel 10px");
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
     useEffect(() => {
@@ -88,7 +82,7 @@ const App: React.FC = () => {
                 spacingWidth: 0.2
             },
             position: [0, 0, 0],
-            rotation: [0, 0, 0]
+            rotation: [0, 0, 0],
         },
         {
             content: gLang('defaultText2'),
@@ -104,7 +98,7 @@ const App: React.FC = () => {
                 spacingWidth: 0.2
             },
             position: [0, 0, 0],
-            rotation: [0, 0, 0]
+            rotation: [0, 0, 0],
         }
     ]);
 
@@ -116,7 +110,6 @@ const App: React.FC = () => {
 
     const [lastWorkshop, setLastWorkshop] = useState<WorkspaceData | null>(null);
 
-    // 创建一个引用来访问 ThreeCanvas 的截图和重置功能
     const threeCanvasRef = useRef<ThreeCanvasHandle>(null);
 
     const handleScreenshot = () => {
@@ -127,7 +120,14 @@ const App: React.FC = () => {
 
     const handleOutputOption: MenuProps['onClick'] = (e) => {
         if (threeCanvasRef.current) {
-            if (e.key === 'glb' || e.key === 'gltf' || e.key === 'obj' || e.key === 'stl') {
+            if (e.key === 'json') {
+                const workspace: WorkspaceData = {
+                    fontId: globalFontId,
+                    texts: texts
+                };
+                exportWorkspace(workspace);
+                messageApi?.success('项目已导出为JSON文件');
+            } else if (e.key === 'glb' || e.key === 'gltf' || e.key === 'obj' || e.key === 'stl') {
                 threeCanvasRef.current.exportScene(e.key);
             }
         }
@@ -139,38 +139,27 @@ const App: React.FC = () => {
         }
     }
 
-    // 自动加载工作区
     useEffect(() => {
-        const workspaceStr = localStorage.getItem('workspace');
-        if (workspaceStr) {
-            const workspace: WorkspaceData = JSON.parse(workspaceStr);
-            // 修复一些缺失的数据（兼容旧版数据）
-            workspace.texts.forEach((text) => {
-                if (!text.opts.z) {
-                    text.opts.z = 0;
-                }
-            });
+        const workspace = loadWorkspaceFromLocalStorage(messageApi);
+        if (workspace) {
             setLastWorkshop(workspace);
         }
-    }, []);
+    }, [messageApi]);
 
     const [initTime] = useState<number>(Date.now());
 
-    // 自动保存工作区
     useEffect(() => {
         const now = Date.now();
-        // 只有在 5 秒后才会自动保存
         if (now - initTime < 5000) {
             return;
         }
         const workspace: WorkspaceData = {
-            fontId: selectedFont,
+            fontId: globalFontId,
             texts: texts
         };
-        // 保存工作区数据
-        localStorage.setItem('workspace', JSON.stringify(workspace));
+        saveWorkspaceToLocalStorage(workspace, messageApi);
         setLastWorkshop(null);
-    }, [selectedFont, texts, initTime]);
+    }, [globalFontId, texts, initTime, messageApi]);
 
     const handleAddText = () => {
         setTexts([
@@ -194,7 +183,6 @@ const App: React.FC = () => {
         ]);
     }
 
-    // 国内镜像加速站
     const [chinaMirrorAlertModal, setChinaMirrorAlertModal] = useState(false);
 
     useEffect(() => {
@@ -215,8 +203,6 @@ const App: React.FC = () => {
                 });
         }
     }, []);
-
-    // 手机端交互
 
     const [tabActiveKey, setTabActiveKey] = useState('1');
 
@@ -239,6 +225,16 @@ const App: React.FC = () => {
                 setTexts(newTexts);
             }
         }
+    };
+
+    const handleTextFontChange = (index: number, fontId: string | undefined) => {
+        const newTexts = [...texts];
+        if (fontId) {
+            newTexts[index].fontId = fontId;
+        } else {
+            delete newTexts[index].fontId;
+        }
+        setTexts(newTexts);
     };
 
     return (
@@ -281,7 +277,6 @@ const App: React.FC = () => {
                 >
                     🚀 国内用户推荐访问国内镜像以获得极速体验～
                 </Modal>
-                {/* 手机端场景和镜头设置*/}
                 {isMobile && (
                     <Popover
                         title={gLang('cameraSettings')}
@@ -297,12 +292,8 @@ const App: React.FC = () => {
                                 }}
                             >
                             <SceneAndCameraSettingsPanel
-                                selectedFont={selectedFont}
-                                setSelectedFont={setSelectedFont}
-                                fontsMap={fontsMap}
-                                setFontsMap={setFontsMap}
-                                customFonts={customFonts}
-                                setCustomFonts={setCustomFonts}
+                                selectedFont={globalFontId}
+                                setSelectedFont={setGlobalFontId}
                                 cameraOptions={cameraOptions}
                                 setCameraOptions={setCameraOptions}
                             />
@@ -317,115 +308,110 @@ const App: React.FC = () => {
                     </Popover>
                 )}
                 <Splitter layout={isMobile ? 'vertical' : 'horizontal'} style={{ height: '100vh' }}>
-                    {/* 左侧配置面板 */}
-                    {
-                        !isMobile && (
-                            <Splitter.Panel defaultSize={300} min={250} max={500} style={{ background: "#F5F5F5", padding: 16, overflow: "auto" }}>
-                                <Flex vertical gap={"middle"} style={{ width: "100%" }}>
-                                    <Collapse
-                                        defaultActiveKey={["camera"]}
-                                        bordered={false}
-                                        style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}
-                                    >
-                                        <Panel header={gLang("cameraSettings")} key="camera">
-                                            <SceneAndCameraSettingsPanel
-                                                selectedFont={selectedFont}
-                                                setSelectedFont={setSelectedFont}
-                                                fontsMap={fontsMap}
-                                                setFontsMap={setFontsMap}
-                                                customFonts={customFonts}
-                                                setCustomFonts={setCustomFonts}
-                                                cameraOptions={cameraOptions}
-                                                setCameraOptions={setCameraOptions}
-                                            />
-                                        </Panel>
-                                    </Collapse>
-                                    {texts.length > 0 &&
-                                        <Collapse activeKey={textPanelActiveKeys} onChange={setTextPanelActiveKeys} bordered={false} style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}>
-                                            {texts.map((text, index) => (
-                                                <Panel
-                                                    header={text.content ? text.content : gLang(`textPanelTitle`, { index: index + 1 })}
-                                                    key={index + 1}
-                                                    extra={
-                                                        <Flex style={{ height: 22, width: 22, marginTop: -2 }}>
-                                                            <Button
-                                                                type={"text"}
-                                                                size={'small'}
-                                                                style={{
-                                                                    height: 26,
-                                                                    width: 26,
-                                                                }}
-                                                                onClick={() => {
-                                                                    const newTexts = [...texts];
-                                                                    newTexts.splice(index, 1);
-                                                                    setTexts(newTexts);
-                                                                }}
-                                                            >
-                                                                <DeleteOutlined style={{ opacity: 0.5 }} />
-                                                            </Button>
-                                                        </Flex>
-                                                    }
-                                                >
-                                                    <TextSettingsPanel
-                                                        text={text.content}
-                                                        textOptions={text.opts}
-                                                        onTextChange={(newText) => {
-                                                            const newTexts = [...texts];
-                                                            newTexts[index].content = newText;
-                                                            setTexts(newTexts);
-                                                        }}
-                                                        onTextOptionsChange={(newOptions) => {
-                                                            const newTexts = [...texts];
-                                                            newTexts[index].opts = newOptions;
-                                                            setTexts(newTexts);
-                                                        }}
-                                                    />
-                                                </Panel>
-                                            ))}
-                                        </Collapse>
-                                    }
-                                    <Button
-                                        type="dashed"
-                                        icon={<PlusOutlined />}
-                                        onClick={() => {
-                                            setTexts([
-                                                ...texts,
-                                                {
-                                                    content: 'New Text',
-                                                    opts: {
-                                                        size: 5,
-                                                        depth: 3,
-                                                        y: texts.length * -6,
-                                                        z: 0,
-                                                        rotY: 0,
-                                                        materials: materialGradientLightBlue,
-                                                        outlineWidth: 0.5,
-                                                        letterSpacing: 1.5,
-                                                        spacingWidth: 0.2
-                                                    },
-                                                    position: [0, 0, 0],
-                                                    rotation: [0, 0, 0]
+                    {!isMobile && (
+                        <Splitter.Panel defaultSize={300} min={250} max={500} style={{ background: "#F5F5F5", padding: 16, overflow: "auto" }}>
+                            <Flex vertical gap={"middle"} style={{ width: "100%" }}>
+                                <Collapse
+                                    defaultActiveKey={["camera"]}
+                                    bordered={false}
+                                    style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}
+                                >
+                                    <Panel header={gLang("cameraSettings")} key="camera">
+                                        <SceneAndCameraSettingsPanel
+                                            selectedFont={globalFontId}
+                                            setSelectedFont={setGlobalFontId}
+                                            cameraOptions={cameraOptions}
+                                            setCameraOptions={setCameraOptions}
+                                        />
+                                    </Panel>
+                                </Collapse>
+                                {texts.length > 0 &&
+                                    <Collapse activeKey={textPanelActiveKeys} onChange={setTextPanelActiveKeys} bordered={false} style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}>
+                                        {texts.map((text, index) => (
+                                            <Panel
+                                                header={text.content ? text.content : gLang(`textPanelTitle`, { index: index + 1 })}
+                                                key={index + 1}
+                                                extra={
+                                                    <Flex style={{ height: 22, width: 22, marginTop: -2 }}>
+                                                        <Button
+                                                            type={"text"}
+                                                            size={'small'}
+                                                            style={{
+                                                                height: 26,
+                                                                width: 26,
+                                                            }}
+                                                            onClick={() => {
+                                                                const newTexts = [...texts];
+                                                                newTexts.splice(index, 1);
+                                                                setTexts(newTexts);
+                                                            }}
+                                                        >
+                                                            <DeleteOutlined style={{ opacity: 0.5 }} />
+                                                        </Button>
+                                                    </Flex>
                                                 }
-                                            ]);
-                                            setTextPanelActiveKeys([(texts.length + 1).toString()]);
-                                        }}
-                                    >
-                                        {gLang('addText')}
-                                    </Button>
-                                </Flex>
-                            </Splitter.Panel>
-                        )
-                    }
-                    {/* 右侧 3D 场景 */}
+                                            >
+                                                <TextSettingsPanel
+                                                    text={text.content}
+                                                    textOptions={text.opts}
+                                                    fontId={text.fontId}
+                                                    globalFontId={globalFontId}
+                                                    onTextChange={(newText) => {
+                                                        const newTexts = [...texts];
+                                                        newTexts[index].content = newText;
+                                                        setTexts(newTexts);
+                                                    }}
+                                                    onTextOptionsChange={(newOptions) => {
+                                                        const newTexts = [...texts];
+                                                        newTexts[index].opts = newOptions;
+                                                        setTexts(newTexts);
+                                                    }}
+                                                    onFontChange={(fontId) => handleTextFontChange(index, fontId)}
+                                                />
+                                            </Panel>
+                                        ))}
+                                    </Collapse>
+                                }
+                                <Button
+                                    type="dashed"
+                                    icon={<PlusOutlined />}
+                                    onClick={() => {
+                                        setTexts([
+                                            ...texts,
+                                            {
+                                                content: 'New Text',
+                                                opts: {
+                                                    size: 5,
+                                                    depth: 3,
+                                                    y: texts.length * -6,
+                                                    z: 0,
+                                                    rotY: 0,
+                                                    materials: materialGradientLightBlue,
+                                                    outlineWidth: 0.5,
+                                                    letterSpacing: 1.5,
+                                                    spacingWidth: 0.2
+                                                },
+                                                position: [0, 0, 0],
+                                                rotation: [0, 0, 0]
+                                            }
+                                        ]);
+                                        setTextPanelActiveKeys([(texts.length + 1).toString()]);
+                                    }}
+                                >
+                                    {gLang('addText')}
+                                </Button>
+                            </Flex>
+                        </Splitter.Panel>
+                    )}
                     <Splitter.Panel style={{ position: "relative" }}>
                         <ThreeCanvas
                             ref={threeCanvasRef}
                             cameraOptions={cameraOptions}
                             texts={texts}
-                            fontUrl={fontsMap[selectedFont]}
-                            globalTextureYOffset={builtinFontsTextureYOffset[selectedFont] ?? 0}
+                            globalFontId={globalFontId}
+                            fontsMap={fontsMap}
+                            globalTextureYOffset={builtinFontsTextureYOffset[globalFontId] ?? 0}
                         />
-                        {/* 添加截图按钮 */}
                         <Flex gap={"small"} style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}>
                             <Button
                                 type="default"
@@ -440,15 +426,15 @@ const App: React.FC = () => {
                                     menu={{
                                         items: [
                                             {
+                                                key: 'json',
+                                                label: gLang('output.json'),
+                                                icon: <FileTextOutlined />
+                                            },
+                                            {
                                                 key: 'glb',
                                                 label: gLang('output.glb'),
                                                 icon: <AppstoreOutlined />
                                             },
-                                            // {
-                                            //     key: 'gltf',
-                                            //     label: gLang('output.gltf'),
-                                            //     icon: <AppstoreOutlined />
-                                            // },
                                             {
                                                 key: 'obj',
                                                 label: gLang('output.obj'),
@@ -471,8 +457,47 @@ const App: React.FC = () => {
 
                         </Flex>
 
-                        {/* 右小角悬浮 */}
                         <Flex style={{ position: "absolute", bottom: 8, right: 8, zIndex: 1 }}>
+                            <a href="https://github.com/EaseCation/cube-3d-text" target="_blank" rel="noopener noreferrer">
+                                <Button type={'text'} style={{ padding: "0px 12px" }}>
+                                    <Typography.Text type={'secondary'}>
+                                        <Space size={'small'}>
+                                            <GithubOutlined />
+                                            {gLang('githubRepo')}
+                                        </Space>
+                                    </Typography.Text>
+                                </Button>
+                            </a>
+                            <Button
+                                type={'text'}
+                                style={{ padding: "0px 12px" }}
+                                onClick={() => {
+                                    const input = document.createElement('input');
+                                    input.type = 'file';
+                                    input.accept = '.json';
+                                    input.onchange = (e) => {
+                                        const file = (e.target as HTMLInputElement).files?.[0];
+                                        if (file) {
+                                            importWorkspaceFromFile(file, messageApi)
+                                                .then(workspace => {
+                                                    setGlobalFontId(workspace.fontId);
+                                                    setTexts(workspace.texts);
+                                                })
+                                                .catch(error => {
+                                                    console.error('导入失败:', error);
+                                                });
+                                        }
+                                    };
+                                    input.click();
+                                }}
+                            >
+                                <Typography.Text type={'secondary'}>
+                                    <Space size={'small'}>
+                                        <FileTextOutlined />
+                                        {gLang('openProject')}
+                                    </Space>
+                                </Typography.Text>
+                            </Button>
                             <Dropdown
                                 menu={{
                                     items: [
@@ -485,7 +510,7 @@ const App: React.FC = () => {
                                     onSelect: ({ key }) => setLanguage(key)
                                 }}
                             >
-                                <Button type={'text'}>
+                                <Button type={'text'} style={{ padding: "0px 12px" }}>
                                     <Typography.Text type={'secondary'}>
                                         <Space size={'small'}>
                                             <GlobalOutlined />
@@ -496,7 +521,6 @@ const App: React.FC = () => {
                             </Dropdown>
                         </Flex>
 
-                        {/*顶部悬浮*/}
                         <Flex style={{ position: "absolute", top: 16, zIndex: 1, width: "100%", pointerEvents: "none", left: 0 }} justify={'center'}>
                             {lastWorkshop && (
                                 <Alert
@@ -522,7 +546,7 @@ const App: React.FC = () => {
                                                 type="link"
                                                 style={{ paddingLeft: 4, paddingRight: 4 }}
                                                 onClick={() => {
-                                                    setSelectedFont(lastWorkshop.fontId);
+                                                    setGlobalFontId(lastWorkshop.fontId);
                                                     setTexts(lastWorkshop.texts);
                                                     setLastWorkshop(null);
                                                 }}
@@ -537,7 +561,6 @@ const App: React.FC = () => {
                         </Flex>
                     </Splitter.Panel>
 
-                    {/* 手机端配置面板 */}
                     {isMobile && (
                         <Splitter.Panel defaultSize={"50%"} min={200}>
                             <Flex vertical style={{ height: "100%", padding: 16 }}>
@@ -573,6 +596,8 @@ const App: React.FC = () => {
                                             <TextSettingsPanel
                                                 text={text.content}
                                                 textOptions={text.opts}
+                                                fontId={text.fontId}
+                                                globalFontId={globalFontId}
                                                 onTextChange={(newText) => {
                                                     const newTexts = [...texts];
                                                     newTexts[index].content = newText;
@@ -583,6 +608,7 @@ const App: React.FC = () => {
                                                     newTexts[index].opts = newOptions;
                                                     setTexts(newTexts);
                                                 }}
+                                                onFontChange={(fontId) => handleTextFontChange(index, fontId)}
                                             />
                                         </Card>
                                     ))
@@ -593,6 +619,16 @@ const App: React.FC = () => {
                 </Splitter>
             </MessageProvider>
         </ConfigProvider>
+    );
+};
+
+const App: React.FC = () => {
+    return (
+        <FontProvider>
+            <MaterialProvider>
+                <AppContent />
+            </MaterialProvider>
+        </FontProvider>
     );
 };
 

@@ -65,7 +65,15 @@ export const languageConfig: Readonly<LanguageConfig> = {
         texture: "纹理",
         fontSuccess: "字体加载完成!",
         fontLoading: "字体加载中...",
+        githubRepo: "EaseCation 开源项目",
+        openProject: "打开项目",
+        exportMaterial: "导出纹理",
+        importMaterial: "导入纹理",
+        shareMaterial: "贡献纹理",
+        materialImported: "纹理导入成功",
+        fileName: "文件名",
         output: {
+            json: "保存项目（可在此工具重新打开）",
             glb: "导出 GLB 模型（包含纹理）",
             gltf: "导出 GLTF 模型",
             obj: "导出 OBJ 模型（不包含纹理）",
@@ -85,7 +93,8 @@ export const languageConfig: Readonly<LanguageConfig> = {
         },
         fontLicence: {
             netease: "限制商用",
-            neteaseTooltip: "商用限制（由于网易已购买商用授权并用于《我的世界》游戏，您可在网易《我的世界》游戏的内部使用）<br>个人用途请遵循<a href=\"https://www.hanyi.com.cn/faq-doc-1\" target=\"_blank\">《汉仪字库个人非商用须知》</a><br>商用请购买商用授权 <a href=\"https://www.hanyi.com.cn/license\" target=\"_blank\">https://www.hanyi.com.cn/license</a>",
+            hanyiTooltip: "商用限制（由于网易已购买商用授权并用于《我的世界》游戏，您可在网易《我的世界》游戏的内部使用）<br>个人用途请遵循<a href=\"https://www.hanyi.com.cn/faq-doc-1\" target=\"_blank\">《汉仪字库个人非商用须知》</a><br>商用请购买商用授权 <a href=\"https://www.hanyi.com.cn/license\" target=\"_blank\">https://www.hanyi.com.cn/license</a>",
+            ruiziTooltip: "商用限制（由于网易已购买商用授权并用于《我的世界》游戏，您可在网易《我的世界》游戏的内部使用）<br>个人用途请遵循<a href=\"http://www.reeji.com/notice.html\" target=\"_blank\">《锐字潮牌字库个人学习版用字须知》</a><br>商用请购买商用授权 <a href=\"http://www.reeji.com/license.html\" target=\"_blank\">http://www.reeji.com/license.html</a>",
             sil: "开放许可证",
             minecraftTenTooltip: "Minecraft Ten Font © 2024, Fardilizer<br>该字体依据 <a href=\"https://fontstruct.com/fontstructions/license/2552125/minecraft-ten-5\" target=\"_blank\"> SIL 开放字体许可证（SIL Open Font License，版本 1.1）</a> 授权使用。",
             fusionPixelTooltip: "Fusion Pixel © 2022, TakWolf<br>该字体依据 <a href=\"https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL\" target=\"_blank\"> SIL 开放字体许可证（SIL Open Font License，版本 1.1）</a> 授权使用。",
@@ -100,7 +109,9 @@ export const languageConfig: Readonly<LanguageConfig> = {
             highlightInnerStroke: "内描边",
             highlightShine: "光泽",
             highlightGlass: "玻璃(温和)"
-        }
+        },
+        textFont: "文字字体",
+        useGlobalFont: "使用全局字体"
     },
     en_US: {
         zh_CN: "中文",
@@ -153,7 +164,15 @@ export const languageConfig: Readonly<LanguageConfig> = {
         texture: "Texture",
         fontSuccess: "Font loaded successfully!",
         fontLoading: "Loading font...",
+        githubRepo: "GitHub",
+        openProject: "Open Project",
+        exportMaterial: "Export Textures",
+        importMaterial: "Import Textures",
+        shareMaterial: "Share Textures",
+        fileName: "File Name",
+        materialImported: "Textures imported successfully",
         output: {
+            json: "Export Project",
             glb: "Export GLB Model",
             gltf: "Export GLTF Model",
             obj: "Export OBJ Model",
@@ -173,7 +192,8 @@ export const languageConfig: Readonly<LanguageConfig> = {
         },
         fontLicence: {
             netease: "Limitation",
-            neteaseTooltip: "Commercial use is restricted, only for internal use of NetEase games",
+            hanyiTooltip: "Commercial use is restricted (NetEase has purchased commercial authorization for use in Minecraft games, you can use it within NetEase Minecraft games)<br>For personal use, please follow <a href=\"https://www.hanyi.com.cn/faq-doc-1\" target=\"_blank\">HanYi Font Library Personal Non-commercial Notice</a><br>For commercial use, please purchase a commercial license at <a href=\"https://www.hanyi.com.cn/license\" target=\"_blank\">https://www.hanyi.com.cn/license</a>",
+            ruiziTooltip: "Commercial use is restricted (NetEase has purchased commercial authorization for use in Minecraft games, you can use it within NetEase Minecraft games)<br>For personal use, please follow <a href=\"http://www.reeji.com/notice.html\" target=\"_blank\">Reeji Font Library Personal Learning Version Usage Guidelines</a><br>For commercial use, please purchase a commercial license at <a href=\"http://www.reeji.com/license.html\" target=\"_blank\">http://www.reeji.com/license.html</a>",
             sil: "SIL",
             minecraftTenTooltip: "Minecraft Ten Font © 2024, Fardilizer<br>This font is licensed under the SIL Open Font License, Version 1.1. Full license text available at <a href=\"https://fontstruct.com/fontstructions/license/2552125/minecraft-ten-5\" target=\"_blank\">https://fontstruct.com/fontstructions/license/2552125/minecraft-ten-5</a>",
             fusionPixelTooltip: "Fusion Pixel © 2022, TakWolf<br>This font is licensed under the SIL Open Font License, Version 1.1. Full license text available at <a href=\"https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL\" target=\"_blank\">https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL</a>",
@@ -188,7 +208,9 @@ export const languageConfig: Readonly<LanguageConfig> = {
             highlightInnerStroke: "Inner Stroke",
             highlightShine: "Shine",
             highlightGlass: "Glass (Tempered)"
-        }
+        },
+        textFont: "Text Font",
+        useGlobalFont: "Use Global Font"
     },
     ja_JP: {
         zh_CN: "中文",
@@ -241,7 +263,15 @@ export const languageConfig: Readonly<LanguageConfig> = {
         texture: "テクスチャ",
         fontSuccess: "フォントが読み込まれました！",
         fontLoading: "フォントを読み込み中...",
+        githubRepo: "GitHub",
+        openProject: "プロジェクトを開く",
+        exportMaterial: "テクスチャをエクスポート",
+        importMaterial: "テクスチャをインポート",
+        materialImported: "テクスチャがインポートされました",
+        shareMaterial: "マテリアルを共有",
+        fileName: "ファイル名",
         output: {
+            json: "プロジェクトをエクスポート",
             glb: "GLBモデルをエクスポート",
             gltf: "GLTFモデルをエクスポート",
             obj: "OBJモデルをエクスポート",
@@ -261,7 +291,8 @@ export const languageConfig: Readonly<LanguageConfig> = {
         },
         fontLicence: {
             netease: "制限",
-            neteaseTooltip: "商用利用は制限されており、NetEaseゲームの内部利用のみです",
+            hanyiTooltip: "商用利用は制限されています（NetEaseはMinecraftゲームでの使用のための商用許可を購入しており、NetEase Minecraftゲーム内での使用が可能です）<br>個人利用の場合は<a href=\"https://www.hanyi.com.cn/faq-doc-1\" target=\"_blank\">漢儀フォントライブラリ個人非商用通知</a>に従ってください<br>商用利用の場合は、<a href=\"https://www.hanyi.com.cn/license\" target=\"_blank\">https://www.hanyi.com.cn/license</a>で商用ライセンスを購入してください",
+            ruiziTooltip: "商用利用は制限されています（NetEaseはMinecraftゲームでの使用のための商用許可を購入しており、NetEase Minecraftゲーム内での使用が可能です）<br>個人利用の場合は<a href=\"http://www.reeji.com/notice.html\" target=\"_blank\">锐字フォントライブラリ個人学習版利用ガイドライン</a>に従ってください<br>商用利用の場合は、<a href=\"http://www.reeji.com/license.html\" target=\"_blank\">http://www.reeji.com/license.html</a>で商用ライセンスを購入してください",
             sil: "SIL",
             minecraftTenTooltip: "Minecraft Ten Font © 2024, Fardilizer<br>このフォントは SIL Open Font License、バージョン 1.1 でライセンスされています。完全なライセンステキストは<a href=\"https://fontstruct.com/fontstructions/license/2552125/minecraft-ten-5\" target=\"_blank\">こちら</a>でご覧いただけます。",
             fusionPixelTooltip: "Fusion Pixel © 2022, TakWolf<br>このフォントは SIL Open Font License、バージョン 1.1 でライセンスされています。完全なライセンステキストは<a href=\"https://github.com/TakWolf/fusion-pixel-font/blob/master/LICENSE-OFL\" target=\"_blank\">こちら</a>でご覧いただけます。",
@@ -276,7 +307,9 @@ export const languageConfig: Readonly<LanguageConfig> = {
             highlightInnerStroke: "内部ストローク",
             highlightShine: "輝き",
             highlightGlass: "ガラス（強化）"
-        }
+        },
+        textFont: "フォント",
+        useGlobalFont: "グローバルフォントを使用"
     },
 };
 
