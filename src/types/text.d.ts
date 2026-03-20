@@ -16,9 +16,12 @@ export interface WorkspaceData {
 export interface TextOptions {
     size: number;
     depth: number;
+    x: number;
     y: number;
     z: number;
-    rotY: number
+    rotY: number;
+    rotX: number;
+    rotZ: number;
     materials: TextMaterials;
     overlay?: OverlayRendererInfo;
     outlineWidth: number;
@@ -65,4 +68,7 @@ export interface TextMaterialColorOption {
 
 export interface CameraOptions {
     fov: number;
+    cameraType?: 'perspective' | 'orthographic';
+    zoom?: number;
+    userZoomFactor?: number; // 用户手动缩放的倍数，用于在 FOV 变化时保留用户的缩放偏好
 }

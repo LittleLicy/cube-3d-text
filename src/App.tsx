@@ -48,7 +48,6 @@ import {
 import { FontProvider, useFonts } from "./contexts/FontContext";
 import { MaterialProvider } from './contexts/MaterialContext';
 
-const { Panel } = Collapse;
 
 const AppContent: React.FC = () => {
     const { language, setLanguage, gLang } = useLanguage();
@@ -73,9 +72,12 @@ const AppContent: React.FC = () => {
             opts: {
                 size: 10,
                 depth: 5,
+                x: 0,
                 y: 8,
                 z: 0,
                 rotY: 0,
+                rotX: 0,
+                rotZ: 0,
                 materials: materialGradientMediumYellow,
                 outlineWidth: 0.4,
                 letterSpacing: 1.0,
@@ -89,9 +91,12 @@ const AppContent: React.FC = () => {
             opts: {
                 size: 5,
                 depth: 3,
+                x: 0,
                 y: -4,
                 z: 0,
                 rotY: 0,
+                rotX: 0,
+                rotZ: 0,
                 materials: materialGradientLightBlue,
                 outlineWidth: 0.5,
                 letterSpacing: 1.5,
@@ -103,7 +108,8 @@ const AppContent: React.FC = () => {
     ]);
 
     const [cameraOptions, setCameraOptions] = useState<CameraOptions>({
-        fov: 75
+        fov: 75,
+        userZoomFactor: 1
     });
 
     const [textPanelActiveKeys, setTextPanelActiveKeys] = useState<string[]>(['1']);
@@ -126,7 +132,7 @@ const AppContent: React.FC = () => {
                     texts: texts
                 };
                 exportWorkspace(workspace);
-                messageApi?.success('项目已导出为JSON文件');
+                messageApi?.success(gLang('projectExportSuccess'));
             } else if (e.key === 'glb' || e.key === 'gltf' || e.key === 'obj' || e.key === 'stl') {
                 threeCanvasRef.current.exportScene(e.key);
             }
@@ -169,9 +175,12 @@ const AppContent: React.FC = () => {
                 opts: {
                     size: 5,
                     depth: 3,
+                    x: 0,
                     y: texts.length * -6,
                     z: 0,
                     rotY: 0,
+                    rotX: 0,
+                    rotZ: 0,
                     materials: materialGradientLightBlue,
                     outlineWidth: 0.5,
                     letterSpacing: 1.5,
@@ -262,20 +271,20 @@ const AppContent: React.FC = () => {
         >
             <MessageProvider>
                 <Modal
-                    title="提示"
+                    title={gLang('notice')}
                     open={chinaMirrorAlertModal}
-                    okText="🚀 立即前往"
+                    okText={gLang('gotoNow')}
                     width={400}
                     onOk={() => {
                         window.location.href = 'https://3dt.easecation.net';
                     }}
-                    cancelText="7 天内不再显示"
+                    cancelText={gLang('hideFor7Days')}
                     onCancel={() => {
                         setChinaMirrorAlertModal(false);
                         localStorage.setItem('hideChinaMirrorAlertUntil', String(Date.now() + 7 * 24 * 60 * 60 * 1000));
                     }}
                 >
-                    🚀 国内用户推荐访问国内镜像以获得极速体验～
+                    {gLang('chinaMirrorNotice')}
                 </Modal>
                 {isMobile && (
                     <Popover
@@ -315,42 +324,50 @@ const AppContent: React.FC = () => {
                                     defaultActiveKey={["camera"]}
                                     bordered={false}
                                     style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}
-                                >
-                                    <Panel header={gLang("cameraSettings")} key="camera">
-                                        <SceneAndCameraSettingsPanel
-                                            selectedFont={globalFontId}
-                                            setSelectedFont={setGlobalFontId}
-                                            cameraOptions={cameraOptions}
-                                            setCameraOptions={setCameraOptions}
-                                        />
-                                    </Panel>
-                                </Collapse>
+                                    items={[
+                                        {
+                                            key: "camera",
+                                            label: gLang("cameraSettings"),
+                                            children: (
+                                                <SceneAndCameraSettingsPanel
+                                                    selectedFont={globalFontId}
+                                                    setSelectedFont={setGlobalFontId}
+                                                    cameraOptions={cameraOptions}
+                                                    setCameraOptions={setCameraOptions}
+                                                />
+                                            )
+                                        }
+                                    ]}
+                                />
                                 {texts.length > 0 &&
-                                    <Collapse activeKey={textPanelActiveKeys} onChange={setTextPanelActiveKeys} bordered={false} style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}>
-                                        {texts.map((text, index) => (
-                                            <Panel
-                                                header={text.content ? text.content : gLang(`textPanelTitle`, { index: index + 1 })}
-                                                key={index + 1}
-                                                extra={
-                                                    <Flex style={{ height: 22, width: 22, marginTop: -2 }}>
-                                                        <Button
-                                                            type={"text"}
-                                                            size={'small'}
-                                                            style={{
-                                                                height: 26,
-                                                                width: 26,
-                                                            }}
-                                                            onClick={() => {
-                                                                const newTexts = [...texts];
-                                                                newTexts.splice(index, 1);
-                                                                setTexts(newTexts);
-                                                            }}
-                                                        >
-                                                            <DeleteOutlined style={{ opacity: 0.5 }} />
-                                                        </Button>
-                                                    </Flex>
-                                                }
-                                            >
+                                    <Collapse
+                                        activeKey={textPanelActiveKeys}
+                                        onChange={setTextPanelActiveKeys}
+                                        bordered={false}
+                                        style={{ background: "white", boxShadow: "0 2px 16px rgba(0, 0, 0, 0.05)" }}
+                                        items={texts.map((text, index) => ({
+                                            key: (index + 1).toString(),
+                                            label: text.content ? text.content : gLang(`textPanelTitle`, { index: index + 1 }),
+                                            extra: (
+                                                <Flex style={{ height: 22, width: 22, marginTop: -2 }}>
+                                                    <Button
+                                                        type={"text"}
+                                                        size={'small'}
+                                                        style={{
+                                                            height: 26,
+                                                            width: 26,
+                                                        }}
+                                                        onClick={() => {
+                                                            const newTexts = [...texts];
+                                                            newTexts.splice(index, 1);
+                                                            setTexts(newTexts);
+                                                        }}
+                                                    >
+                                                        <DeleteOutlined style={{ opacity: 0.5 }} />
+                                                    </Button>
+                                                </Flex>
+                                            ),
+                                            children: (
                                                 <TextSettingsPanel
                                                     text={text.content}
                                                     textOptions={text.opts}
@@ -368,9 +385,9 @@ const AppContent: React.FC = () => {
                                                     }}
                                                     onFontChange={(fontId) => handleTextFontChange(index, fontId)}
                                                 />
-                                            </Panel>
-                                        ))}
-                                    </Collapse>
+                                            )
+                                        }))}
+                                    />
                                 }
                                 <Button
                                     type="dashed"
@@ -383,9 +400,12 @@ const AppContent: React.FC = () => {
                                                 opts: {
                                                     size: 5,
                                                     depth: 3,
+                                                    x: 0,
                                                     y: texts.length * -6,
                                                     z: 0,
                                                     rotY: 0,
+                                                    rotX: 0,
+                                                    rotZ: 0,
                                                     materials: materialGradientLightBlue,
                                                     outlineWidth: 0.5,
                                                     letterSpacing: 1.5,
@@ -407,6 +427,7 @@ const AppContent: React.FC = () => {
                         <ThreeCanvas
                             ref={threeCanvasRef}
                             cameraOptions={cameraOptions}
+                            setCameraOptions={setCameraOptions}
                             texts={texts}
                             globalFontId={globalFontId}
                             fontsMap={fontsMap}
@@ -478,7 +499,7 @@ const AppContent: React.FC = () => {
                                     input.onchange = (e) => {
                                         const file = (e.target as HTMLInputElement).files?.[0];
                                         if (file) {
-                                            importWorkspaceFromFile(file, messageApi)
+                                            importWorkspaceFromFile(file, messageApi, gLang)
                                                 .then(workspace => {
                                                     setGlobalFontId(workspace.fontId);
                                                     setTexts(workspace.texts);

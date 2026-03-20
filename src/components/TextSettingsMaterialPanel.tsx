@@ -12,7 +12,6 @@ import {
 import { useLanguage } from "../language";
 import { serializeMaterial, SerializedMaterial, deserializeMaterial } from "../utils/materialSerializer";
 
-const { Panel } = Collapse;
 const { Option } = Select;
 
 interface TextSettingsMaterialPanelProps {
@@ -240,9 +239,9 @@ const TextSettingsMaterialPanel: React.FC<TextSettingsMaterialPanelProps> = ({
                         </Form.Item>
                         <Form.Item label={gLang('repeatX')} key={`${face}-image-repeat-x`}>
                             <Slider
-                                min={0.001}
+                                min={0.005}
                                 max={2}
-                                step={0.001}
+                                step={0.005}
                                 value={(currentMaterial as TextMaterialImageOption).repeatX}
                                 onChange={(value) =>
                                     handleOptionChange(face, { repeatX: value })
@@ -251,9 +250,9 @@ const TextSettingsMaterialPanel: React.FC<TextSettingsMaterialPanelProps> = ({
                         </Form.Item>
                         <Form.Item label={gLang('repeatY')} key={`${face}-image-repeat-y`}>
                             <Slider
-                                min={0.001}
+                                min={0.005}
                                 max={2}
-                                step={0.001}
+                                step={0.005}
                                 value={(currentMaterial as TextMaterialImageOption).repeatY}
                                 onChange={(value) =>
                                     handleOptionChange(face, { repeatY: value })
@@ -376,7 +375,7 @@ const TextSettingsMaterialPanel: React.FC<TextSettingsMaterialPanelProps> = ({
                 message.success(gLang('materialImported'));
             } catch (error) {
                 console.error("导入材质失败:", error);
-                message.error(gLang('importFailed'));
+                message.error(gLang('importMaterialFailed'));
             }
 
             if (fileInputRef.current) {
@@ -394,15 +393,19 @@ const TextSettingsMaterialPanel: React.FC<TextSettingsMaterialPanelProps> = ({
     return (
         <>
             <Flex vertical gap={'small'}>
-                <Collapse accordion>
-                    {(Object.keys(materials) as Array<keyof TextMaterials>).map((face) => (
-                        <Panel header={faceLabels[face]} key={face} extra={renderExtraPreview(materials[face])}>
+                <Collapse
+                    accordion
+                    items={(Object.keys(materials) as Array<keyof TextMaterials>).map((face) => ({
+                        key: face,
+                        label: faceLabels[face],
+                        extra: renderExtraPreview(materials[face]),
+                        children: (
                             <Form layout="vertical">
                                 {renderModeOptions(face)}
                             </Form>
-                        </Panel>
-                    ))}
-                </Collapse>
+                        )
+                    }))}
+                />
                 <Flex gap={0} justify={'end'}>
                     <Tooltip title={gLang('exportMaterial')}>
                         <Button
